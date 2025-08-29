@@ -1,9 +1,11 @@
 package com.mp3.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -41,10 +43,24 @@ public class OpenApiConfig {
                 .title("MP3 Application API")
                 .version("1.0")
                 .contact(contact)
-                .description("API documentation for MP3 music application")
+                .description("API documentation for MP3 music application with JWT Authentication")
                 .termsOfService("https://www.mp3app.com/terms")
                 .license(mitLicense);
 
-        return new OpenAPI().info(info).servers(List.of(devServer, prodServer));
+        // Add JWT Security Scheme
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .name("bearerAuth")
+                .description("JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"");
+
+        Components components = new Components()
+                .addSecuritySchemes("bearerAuth", securityScheme);
+
+        return new OpenAPI()
+                .info(info)
+                .servers(List.of(devServer, prodServer))
+                .components(components);
     }
 }

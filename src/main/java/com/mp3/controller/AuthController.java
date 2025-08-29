@@ -2,6 +2,7 @@ package com.mp3.controller;
 
 import com.mp3.dto.request.LoginRequest;
 import com.mp3.dto.request.RegisterRequest;
+import com.mp3.dto.response.LoginResponse;
 import com.mp3.dto.response.UserResponse;
 import com.mp3.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,14 +38,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Đăng nhập", description = "Xác thực người dùng bằng email và mật khẩu")
+    @Operation(summary = "Đăng nhập", description = "Xác thực người dùng bằng email và mật khẩu, trả về JWT token")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Đăng nhập thành công"),
             @ApiResponse(responseCode = "400", description = "Dữ liệu đầu vào không hợp lệ"),
             @ApiResponse(responseCode = "401", description = "Email hoặc mật khẩu không đúng")
     })
-    public ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request) {
-        UserResponse userResponse = userService.login(request);
-        return ResponseEntity.ok(userResponse);
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse loginResponse = userService.login(request);
+        return ResponseEntity.ok(loginResponse);
     }
 }
