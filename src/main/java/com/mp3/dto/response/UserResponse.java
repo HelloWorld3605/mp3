@@ -27,4 +27,7 @@ public class UserResponse {
 
     @Schema(description = "URL ảnh đại diện của người dùng", example = "https://example.com/avatar.jpg")
     private String avatarUrl;
+
+    @Schema(description = "Trạng thái xác thực email", example = "true")
+    private Boolean isEmailVerified;
 }
