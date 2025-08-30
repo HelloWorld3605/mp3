@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
         // Generate email verification token
         String verificationToken = UUID.randomUUID().toString();
         user.setEmailVerificationToken(verificationToken);
-        user.setEmailVerificationExpiresAt(LocalDateTime.now().plusHours(24));
+        user.setEmailVerificationExpiresAt(LocalDateTime.now().plusMinutes(5));
         user.setIsEmailVerified(false);
 
         User savedUser = userRepository.save(user);
