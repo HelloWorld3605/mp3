@@ -24,4 +24,7 @@ public interface UserService {
 
     String verifyEmail(String token);
     void resendEmailVerification(String email);
+
+    // Soft delete method
+    void deleteUser(String id);
 }

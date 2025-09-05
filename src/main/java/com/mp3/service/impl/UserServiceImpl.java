@@ -39,15 +39,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse register(RegisterRequest request) {
-        // check email đã tồn tại
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmailAndNotDeleted(request.getEmail())) {
             throw new RuntimeException("Email đã được đăng ký!");
         }
 
         // map request -> entity
         User user = UserMapper.toUser(request);
 
-        // mã hoá password trước khi lưu
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         // Generate email verification token
@@ -72,7 +70,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findActiveByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Email hoặc mật khẩu không đúng!"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
@@ -93,14 +91,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getProfile(String id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
         return UserMapper.toUserResponse(user);
     }
 
     @Override
     public UserResponse updateProfile(String id, UserResponse updateRequest) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
 
         // Update only allowed fields
@@ -117,7 +115,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(String id, ChangePasswordRequest request) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
 
         // Verify old password
@@ -134,6 +132,11 @@ public class UserServiceImpl implements UserService {
     public String verifyEmail(String token) {
         User user = userRepository.findByEmailVerificationToken(token)
                 .orElseThrow(() -> new RuntimeException("Token xác thực không hợp lệ hoặc đã hết hạn!"));
+
+        // Check if user is deleted
+        if (user.getDeletedAt() != null) {
+            throw new RuntimeException("Tài khoản đã bị xóa!");
+        }
 
         // Check if token is expired
         if (user.getEmailVerificationExpiresAt().isBefore(LocalDateTime.now())) {
@@ -164,7 +167,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void resendEmailVerification(String email) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findActiveByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống!"));
 
         // Check if email is already verified
@@ -189,7 +192,7 @@ public class UserServiceImpl implements UserService {
         String email = request.getEmail();
 
         // Check if email is already registered
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmailAndNotDeleted(email)) {
             throw new RuntimeException("Email đã được đăng ký trong hệ thống!");
         }
 
@@ -230,7 +233,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // Check if email is already registered (double check)
-        if (userRepository.existsByEmail(pendingRegistration.getEmail())) {
+        if (userRepository.existsByEmailAndNotDeleted(pendingRegistration.getEmail())) {
             throw new RuntimeException("Email đã được đăng ký trong hệ thống!");
         }
 
@@ -258,5 +261,20 @@ public class UserServiceImpl implements UserService {
         }
 
         return UserMapper.toUserResponse(savedUser);
+    }
+
+    @Override
+    public void deleteUser(String id) {
+        User user = userRepository.findByIdIncludingDeleted(id)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
+
+        // Kiểm tra nếu user đã bị xóa mềm rồi
+        if (user.getDeletedAt() != null) {
+            throw new RuntimeException("Người dùng này đã bị xóa rồi!");
+        }
+
+        // Xóa mềm: set deletedAt = thời gian hiện tại
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 }

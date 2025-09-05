@@ -1,5 +1,6 @@
 package com.mp3.entity;
 
+import com.mp3.enums.Genre;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -17,7 +18,7 @@ public class Song {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private String id;
 
     @Column(nullable = false)
     private String title;
@@ -29,8 +30,8 @@ public class Song {
     private String description;
 
     // Thể loại (có thể null)
-    @ManyToOne
-    @JoinColumn(name = "genre_id")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
     private Genre genre;
 
     // Thời lượng (giây)
@@ -44,7 +45,7 @@ public class Song {
     // Ảnh bìa (có thể null)
     private String coverUrl;
 
-    private LocalDate releaseDate;
+    private LocalDate releaseDate; // "yyyy-MM-dd"
 
     @Column(nullable = false)
     private Long playCount = 0L;
@@ -56,6 +57,8 @@ public class Song {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    private LocalDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {
